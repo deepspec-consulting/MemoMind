@@ -6,4 +6,3 @@
 4. There should be a stable, accurate, concise tag for each note. The tags should be generated automatically.
 5. The tag should be maintained by a large language model, instead of training a separate ML model.
 6. I should be able to use a large language model based UI to interactive with my notes. For example: extract ideas that can be used for my new podcast episode; find my highest purchase last week; etc.
-7. use Langchain
