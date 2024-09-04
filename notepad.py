@@ -4,21 +4,36 @@ import sqlite3
 import os
 from werkzeug.utils import secure_filename
 import io
+from datetime import datetime
+import random
 
 app = Flask(__name__, static_folder='static')
+
+# Define the EMOJIS list
+EMOJIS = ['😀', '😎', '🤔', '🥳', '🐱', '🐶', '🦄', '🌈', '🍕', '🚀', '🎨', '🎵', '🌺', '🍉', '🏖️', '🎮', '🚲', '📚', '🍿', '🧘']
 
 # Database setup
 def init_db():
     conn = sqlite3.connect('notes.db')
     c = conn.cursor()
+    
+    # Create the notes table if it doesn't exist
     c.execute('''CREATE TABLE IF NOT EXISTS notes
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   title TEXT NOT NULL,
                   content TEXT NOT NULL,
                   is_voice BOOLEAN DEFAULT FALSE)''')
+    
+    # Check if emoji column exists, if not, add it
+    c.execute("PRAGMA table_info(notes)")
+    columns = [column[1] for column in c.fetchall()]
+    if 'emoji' not in columns:
+        c.execute("ALTER TABLE notes ADD COLUMN emoji TEXT")
+    
     conn.commit()
     conn.close()
 
+# Call init_db at the start of the application
 init_db()
 
 @app.route('/')
@@ -35,9 +50,10 @@ def add_note():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
+        emoji = random.choice(EMOJIS)
         conn = sqlite3.connect('notes.db')
         c = conn.cursor()
-        c.execute("INSERT INTO notes (title, content) VALUES (?, ?)", (title, content))
+        c.execute("INSERT INTO notes (title, content, emoji) VALUES (?, ?, ?)", (title, content, emoji))
         conn.commit()
         conn.close()
         return redirect(url_for('index'))
@@ -89,9 +105,10 @@ def update_note(id):
     return render_template('edit.html', note=note)
 
 UPLOAD_FOLDER = 'static/audio'
-ALLOWED_EXTENSIONS = {'mp3', 'wav', 'ogg'}
-
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -99,18 +116,22 @@ def allowed_file(filename):
 @app.route('/add_voice', methods=['GET', 'POST'])
 def add_voice_note():
     if request.method == 'POST':
-        title = request.form['title']
         audio_file = request.files['audio']
         
         if audio_file:
-            filename = secure_filename(f"{title}.wav")
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = secure_filename(f"voice_note_{timestamp}.wav")
             file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            os.makedirs(os.path.dirname(file_path), exist_ok=True)
+            
             audio_file.save(file_path)
             
+            emoji = random.choice(EMOJIS)
             conn = sqlite3.connect('notes.db')
             c = conn.cursor()
-            c.execute("INSERT INTO notes (title, content, is_voice) VALUES (?, ?, ?)", 
-                      (title, file_path, True))
+            c.execute("INSERT INTO notes (title, content, is_voice, emoji) VALUES (?, ?, ?, ?)", 
+                      (f"Voice Note {timestamp}", filename, True, emoji))
             conn.commit()
             conn.close()
             return redirect(url_for('index'))

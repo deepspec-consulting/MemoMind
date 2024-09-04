@@ -35,32 +35,77 @@ h1 {
     background-color: #2980b9;
 }
 
-.note-list {
-    list-style-type: none;
-    padding: 0;
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.note-item {
+.chat-message {
+    display: flex;
+    align-items: flex-start;
     background-color: #fff;
-    margin-bottom: 20px;
-    padding: 20px;
-    border-radius: 5px;
+    border-radius: 20px;
+    padding: 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.emoji-avatar {
+    font-size: 2em;
+    margin-right: 15px;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #f0f0f0;
+    border-radius: 50%;
+}
+
+.message-content {
+    flex-grow: 1;
 }
 
 .note-title {
     font-size: 1.2em;
     margin-bottom: 10px;
+    color: #2c3e50;
 }
 
 .note-content {
     margin-bottom: 15px;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.voice-note {
+    background-color: #e8f5fe;
+}
+
+.text-note {
+    background-color: #fff;
+}
+
+audio {
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.note-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
 }
 
 .note-actions a {
-    margin-right: 10px;
     color: #3498db;
     text-decoration: none;
+    font-size: 0.9em;
+}
+
+.note-actions a:hover {
+    text-decoration: underline;
 }
 
 form {
@@ -97,7 +142,25 @@ input[type="submit"]:hover {
     background-color: #27ae60;
 }
 
-audio {
-    width: 100%;
-    margin-bottom: 10px;
+.record-button {
+    font-size: 48px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: none;
+    background-color: #f0f0f0;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.record-button:hover {
+    background-color: #e0e0e0;
+}
+
+.record-button.recording {
+    background-color: #ff4136;
+    color: white;
 }

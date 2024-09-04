@@ -1,23 +1,35 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <ul class="note-list">
+    <div class="chat-container">
     {% for note in notes %}
-        <li class="note-item">
-            <h3 class="note-title">{{ note[1] }}</h3>
-            {% if note[3] %}
-                <audio controls>
-                    <source src="{{ url_for('static', filename='audio/' + note[2].split('/')[-1]) }}" type="audio/mpeg">
-                    Your browser does not support the audio element.
-                </audio>
-            {% else %}
-                <p class="note-content">{{ note[2][:100] }}{% if note[2]|length > 100 %}...{% endif %}</p>
-            {% endif %}
-            <div class="note-actions">
-                <a href="{{ url_for('edit_note', id=note[0]) }}">Edit</a>
-                <a href="{{ url_for('delete_note', id=note[0]) }}" onclick="return confirm('Are you sure you want to delete this note?');">Delete</a>
+        <div class="chat-message {% if note[3] %}voice-note{% else %}text-note{% endif %}">
+            <div class="emoji-avatar">
+                {{ note[4] }}
             </div>
-        </li>
+            <div class="message-content">
+                {% if note[3] %}
+                    <h3 class="note-title">
+                        <i class="fas fa-microphone"></i>
+                        {{ note[1] }}
+                    </h3>
+                    <audio controls>
+                        <source src="{{ url_for('static', filename='audio/' + note[2]) }}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                {% else %}
+                    <p class="note-content">{{ note[2] }}</p>
+                {% endif %}
+                <div class="note-actions">
+                    <a href="{{ url_for('edit_note', id=note[0]) }}">Edit</a>
+                    <a href="{{ url_for('delete_note', id=note[0]) }}" onclick="return confirm('Are you sure you want to delete this note?');">Delete</a>
+                </div>
+            </div>
+        </div>
     {% endfor %}
-    </ul>
+    </div>
+{% endblock %}
+
+{% block extra_head %}
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
 {% endblock %}
