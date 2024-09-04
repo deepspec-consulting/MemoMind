@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Voice Note - MemoMind{% endblock %}
+
+{% block content %}
+    <h2>Add Voice Note</h2>
+    <form id="voiceForm" method="post" enctype="multipart/form-data">
+        <label for="title">Title</label>
+        <input type="text" name="title" id="title" required>
+        <div id="controls">
+            <button id="recordButton" type="button">Record</button>
+            <button id="stopButton" type="button" disabled>Stop</button>
+        </div>
+        <audio id="audioPlayback" controls style="display: none;"></audio>
+        <input type="hidden" name="audio" id="audioBlob">
+        <input type="submit" value="Add Voice Note" id="submitButton" disabled>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        const recordButton = document.getElementById('recordButton');
+        const stopButton = document.getElementById('stopButton');
+        const audioPlayback = document.getElementById('audioPlayback');
+        const submitButton = document.getElementById('submitButton');
+        const audioBlob = document.getElementById('audioBlob');
+
+        recordButton.onclick = async () => {
+            audioChunks = [];
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                audioPlayback.src = URL.createObjectURL(audioBlob);
+                audioPlayback.style.display = 'block';
+                submitButton.disabled = false;
+            };
+            mediaRecorder.start();
+            recordButton.disabled = true;
+            stopButton.disabled = false;
+        };
+
+        stopButton.onclick = () => {
+            mediaRecorder.stop();
+            recordButton.disabled = false;
+            stopButton.disabled = true;
+        };
+
+        document.getElementById('voiceForm').onsubmit = (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            formData.set('audio', new Blob(audioChunks, { type: 'audio/wav' }), 'recording.wav');
+            fetch('{{ url_for("add_voice_note") }}', {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '{{ url_for("index") }}';
+                }
+            });
+        };
+    </script>
+{% endblock %}
