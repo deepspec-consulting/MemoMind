@@ -19,22 +19,6 @@ h1 {
     margin-bottom: 30px;
 }
 
-.btn {
-    display: inline-block;
-    margin-right: 10px;
-    margin-bottom: 20px;
-    background-color: #3498db;
-    color: #fff;
-    padding: 10px 15px;
-    text-decoration: none;
-    border-radius: 5px;
-    transition: background-color 0.3s;
-}
-
-.btn:hover {
-    background-color: #2980b9;
-}
-
 .chat-container {
     display: flex;
     flex-direction: column;
@@ -93,19 +77,22 @@ audio {
 
 .note-actions {
     display: flex;
-    justify-content: flex-end;
     gap: 10px;
-    margin-top: 10px;
+    align-items: center;
 }
 
 .note-actions a {
     color: #3498db;
     text-decoration: none;
-    font-size: 0.9em;
+    transition: color 0.3s ease;
 }
 
 .note-actions a:hover {
-    text-decoration: underline;
+    color: #2980b9;
+}
+
+.note-actions .material-icons {
+    font-size: 20px;
 }
 
 form {
@@ -167,10 +154,11 @@ input[type="submit"]:hover {
 
 .input-container {
     display: flex;
+    align-items: center;
     margin-top: 20px;
     background-color: #fff;
     border-radius: 25px;
-    padding: 10px;
+    padding: 5px 15px;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -186,15 +174,36 @@ input[type="submit"]:hover {
     background: none;
     border: none;
     cursor: pointer;
-    font-size: 20px;
     color: #3498db;
-    padding: 0 10px;
+    padding: 10px;
+    transition: color 0.3s ease;
 }
 
 .mic-button:hover {
     color: #2980b9;
 }
 
+.mic-button .material-icons {
+    font-size: 24px;
+}
+
 .mic-button.recording {
     color: #e74c3c;
+}
+
+.audio-container, .text-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.audio-container audio {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.text-container .note-content {
+    flex-grow: 1;
+    margin-right: 10px;
 }

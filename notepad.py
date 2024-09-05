@@ -89,16 +89,18 @@ def update_note(id):
         title = request.form['title']
         content = request.form['content']
         
-        conn = get_db_connection()
-        conn.execute('UPDATE notes SET title = ?, content = ? WHERE id = ?',
+        conn = sqlite3.connect('notes.db')
+        c = conn.cursor()
+        c.execute('UPDATE notes SET title = ?, content = ? WHERE id = ?',
                      (title, content, id))
         conn.commit()
         conn.close()
         
         return redirect(url_for('index'))
     
-    conn = get_db_connection()
-    note = conn.execute('SELECT * FROM notes WHERE id = ?', (id,)).fetchone()
+    conn = sqlite3.connect('notes.db')
+    c = conn.cursor()
+    note = c.execute('SELECT * FROM notes WHERE id = ?', (id,)).fetchone()
     conn.close()
     
     return render_template('edit.html', note=note)
