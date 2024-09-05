@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 import io
 from datetime import datetime
 import requests
+import sys
 
 app = Flask(__name__, static_folder='static')
 
@@ -158,4 +159,7 @@ def clear_all_notes():
     return '', 204  # Return no content, but a successful status code
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = 5000  # default port
+    if len(sys.argv) > 1:
+        port = int(sys.argv[1])
+    app.run(debug=True, port=port)
