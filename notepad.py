@@ -164,6 +164,25 @@ def delete_all_notes():
         print(f"Error deleting all notes: {str(e)}")
         return jsonify({"success": False, "error": str(e)}), 500
 
+@app.route('/get_notes/<int:page>')
+def get_notes(page):
+    per_page = 10  # Number of notes to load per batch
+    offset = (page - 1) * per_page
+    
+    conn = sqlite3.connect('notes.db')
+    c = conn.cursor()
+    c.execute("SELECT * FROM notes ORDER BY id DESC LIMIT ? OFFSET ?", (per_page, offset))
+    notes = c.fetchall()
+    conn.close()
+    
+    return jsonify([{
+        'id': note[0],
+        'title': note[1],
+        'content': note[2],
+        'is_voice': note[3],
+        'emoji': note[4]
+    } for note in notes])
+
 if __name__ == '__main__':
     port = 5000  # default port
     if len(sys.argv) > 1:
