@@ -45,7 +45,7 @@ def index():
     conn.close()
     return render_template('index.html', notes=notes)
 
-@app.route('/add', methods=['GET', 'POST'])
+@app.route('/add', methods=['POST'])
 def add_note():
     if request.method == 'POST':
         title = request.form['title']
@@ -56,8 +56,7 @@ def add_note():
         c.execute("INSERT INTO notes (title, content, emoji) VALUES (?, ?, ?)", (title, content, emoji))
         conn.commit()
         conn.close()
-        return redirect(url_for('index'))
-    return render_template('add.html')
+        return '', 204  # Return no content, but a successful status code
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_note(id):
@@ -113,29 +112,34 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/add_voice', methods=['GET', 'POST'])
+@app.route('/add_voice', methods=['POST'])
 def add_voice_note():
-    if request.method == 'POST':
-        audio_file = request.files['audio']
+    if 'audio' not in request.files:
+        return 'No audio file', 400
+    
+    audio_file = request.files['audio']
+    if audio_file.filename == '':
+        return 'No selected file', 400
+    
+    if audio_file:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = secure_filename(f"voice_note_{timestamp}.wav")
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        if audio_file:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = secure_filename(f"voice_note_{timestamp}.wav")
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            
-            audio_file.save(file_path)
-            
-            emoji = random.choice(EMOJIS)
-            conn = sqlite3.connect('notes.db')
-            c = conn.cursor()
-            c.execute("INSERT INTO notes (title, content, is_voice, emoji) VALUES (?, ?, ?, ?)", 
-                      (f"Voice Note {timestamp}", filename, True, emoji))
-            conn.commit()
-            conn.close()
-            return redirect(url_for('index'))
-    return render_template('add_voice.html')
+        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        
+        audio_file.save(file_path)
+        
+        emoji = random.choice(EMOJIS)
+        conn = sqlite3.connect('notes.db')
+        c = conn.cursor()
+        c.execute("INSERT INTO notes (title, content, is_voice, emoji) VALUES (?, ?, ?, ?)", 
+                  (f"Voice Note {timestamp}", filename, True, emoji))
+        conn.commit()
+        conn.close()
+        return '', 204  # Return no content, but a successful status code
+    
+    return 'Failed to save audio', 400
 
 if __name__ == '__main__':
     app.run(debug=True)

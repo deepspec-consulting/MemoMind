@@ -164,3 +164,37 @@ input[type="submit"]:hover {
     background-color: #ff4136;
     color: white;
 }
+
+.input-container {
+    display: flex;
+    margin-top: 20px;
+    background-color: #fff;
+    border-radius: 25px;
+    padding: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+#noteInput {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    padding: 10px;
+    font-size: 16px;
+}
+
+.mic-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    color: #3498db;
+    padding: 0 10px;
+}
+
+.mic-button:hover {
+    color: #2980b9;
+}
+
+.mic-button.recording {
+    color: #e74c3c;
+}

@@ -9,10 +9,6 @@
             </div>
             <div class="message-content">
                 {% if note[3] %}
-                    <h3 class="note-title">
-                        <i class="fas fa-microphone"></i>
-                        {{ note[1] }}
-                    </h3>
                     <audio controls>
                         <source src="{{ url_for('static', filename='audio/' + note[2]) }}" type="audio/wav">
                         Your browser does not support the audio element.
@@ -28,8 +24,83 @@
         </div>
     {% endfor %}
     </div>
+
+    <div class="input-container">
+        <input type="text" id="noteInput" placeholder="Type a note...">
+        <button id="micButton" class="mic-button">
+            <i class="fas fa-microphone"></i>
+        </button>
+    </div>
 {% endblock %}
 
-{% block extra_head %}
-    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js" crossorigin="anonymous"></script>
+{% block scripts %}
+<script>
+    const noteInput = document.getElementById('noteInput');
+    const micButton = document.getElementById('micButton');
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    noteInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const content = noteInput.value.trim();
+            if (content) {
+                addTextNote(content);
+                noteInput.value = '';
+            }
+        }
+    });
+
+    micButton.addEventListener('click', toggleRecording);
+
+    function addTextNote(content) {
+        fetch('{{ url_for("add_note") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `title=${encodeURIComponent(content.substring(0, 30))}&content=${encodeURIComponent(content)}`
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+
+    async function toggleRecording() {
+        if (!isRecording) {
+            audioChunks = [];
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = (event) => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.onstop = () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                saveVoiceNote(audioBlob);
+            };
+            mediaRecorder.start();
+            isRecording = true;
+            micButton.classList.add('recording');
+        } else {
+            mediaRecorder.stop();
+            isRecording = false;
+            micButton.classList.remove('recording');
+        }
+    }
+
+    function saveVoiceNote(audioBlob) {
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.wav');
+        fetch('{{ url_for("add_voice_note") }}', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            if (response.ok) {
+                window.location.reload();
+            }
+        });
+    }
+</script>
 {% endblock %}
