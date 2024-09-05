@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 import os
 from werkzeug.utils import secure_filename
@@ -46,7 +46,7 @@ def get_random_emoji():
 def index():
     conn = sqlite3.connect('notes.db')
     c = conn.cursor()
-    c.execute("SELECT * FROM notes")
+    c.execute("SELECT * FROM notes ORDER BY id DESC")  # Order by id in descending order
     notes = c.fetchall()
     conn.close()
     return render_template('index.html', notes=notes)
@@ -60,9 +60,10 @@ def add_note():
         conn = sqlite3.connect('notes.db')
         c = conn.cursor()
         c.execute("INSERT INTO notes (title, content, emoji) VALUES (?, ?, ?)", (title, content, emoji))
+        note_id = c.lastrowid
         conn.commit()
         conn.close()
-        return '', 204  # Return no content, but a successful status code
+        return jsonify({'id': note_id, 'content': content, 'emoji': emoji})
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_note(id):
@@ -143,20 +144,25 @@ def add_voice_note():
         c = conn.cursor()
         c.execute("INSERT INTO notes (title, content, is_voice, emoji) VALUES (?, ?, ?, ?)", 
                   (f"Voice Note {timestamp}", filename, True, emoji))
+        note_id = c.lastrowid
         conn.commit()
         conn.close()
-        return '', 204  # Return no content, but a successful status code
+        return jsonify({'id': note_id, 'content': filename, 'emoji': emoji})
     
     return 'Failed to save audio', 400
 
-@app.route('/clear_all', methods=['POST'])
-def clear_all_notes():
-    conn = sqlite3.connect('notes.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM notes")
-    conn.commit()
-    conn.close()
-    return '', 204  # Return no content, but a successful status code
+@app.route('/delete_all', methods=['POST'])
+def delete_all_notes():
+    try:
+        conn = sqlite3.connect('notes.db')
+        c = conn.cursor()
+        c.execute("DELETE FROM notes")
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True}), 200
+    except Exception as e:
+        print(f"Error deleting all notes: {str(e)}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 if __name__ == '__main__':
     port = 5000  # default port

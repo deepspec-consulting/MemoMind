@@ -2,12 +2,12 @@
 
 {% block extra_head %}
 <style>
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
-    .fade-out {
-        animation: fadeOut 0.5s ease-out;
+    .fade-in {
+        animation: fadeIn 0.5s ease-out;
     }
 </style>
 {% endblock %}
@@ -51,10 +51,6 @@
             <span class="material-icons">mic</span>
         </button>
     </div>
-
-    <button id="clearAllButton" class="clear-all-button">
-        <span class="material-icons">delete_sweep</span> Clear All
-    </button>
 {% endblock %}
 
 {% block scripts %}
@@ -87,38 +83,35 @@
             body: `title=${encodeURIComponent(content.substring(0, 30))}&content=${encodeURIComponent(content)}`
         }).then(response => {
             if (response.ok) {
-                window.location.reload();
+                return response.json();
+            }
+        }).then(data => {
+            if (data) {
+                addNoteToDOM(data);
             }
         });
     }
 
-    async function toggleRecording() {
-        if (!isRecording) {
-            try {
-                audioChunks = [];
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = (event) => {
-                    audioChunks.push(event.data);
-                };
-                mediaRecorder.onstop = () => {
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-                    saveVoiceNote(audioBlob);
-                };
-                mediaRecorder.start();
-                isRecording = true;
-                micButton.classList.add('recording');
-                micButton.querySelector('.material-icons').textContent = 'stop';
-            } catch (err) {
-                console.error("Error accessing the microphone", err);
-                alert("Error accessing the microphone. Please make sure you've granted the necessary permissions.");
-            }
-        } else {
-            mediaRecorder.stop();
-            isRecording = false;
-            micButton.classList.remove('recording');
-            micButton.querySelector('.material-icons').textContent = 'mic';
-        }
+    function addNoteToDOM(note) {
+        const chatContainer = document.querySelector('.chat-container');
+        const noteElement = document.createElement('div');
+        noteElement.className = `chat-message text-note fade-in`;
+        noteElement.innerHTML = `
+            <div class="emoji-avatar">
+                ${note.emoji}
+            </div>
+            <div class="message-content">
+                <div class="text-container">
+                    <p class="note-content">${note.content}</p>
+                    <div class="note-actions">
+                        <a href="/edit/${note.id}" title="Edit"><span class="material-icons">edit</span></a>
+                        <a href="/delete/${note.id}" onclick="return confirm('Are you sure you want to delete this note?');" title="Delete"><span class="material-icons">delete</span></a>
+                    </div>
+                </div>
+            </div>
+        `;
+        chatContainer.appendChild(noteElement);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
     function saveVoiceNote(audioBlob) {
@@ -129,31 +122,38 @@
             body: formData
         }).then(response => {
             if (response.ok) {
-                window.location.reload();
+                return response.json();
+            }
+        }).then(data => {
+            if (data) {
+                addVoiceNoteToDOM(data);
             }
         });
     }
 
-    const clearAllButton = document.getElementById('clearAllButton');
-    const chatContainer = document.querySelector('.chat-container');
-
-    clearAllButton.addEventListener('click', function() {
-        if (confirm('Are you sure you want to clear all notes?')) {
-            const notes = document.querySelectorAll('.chat-message');
-            notes.forEach(note => {
-                note.classList.add('fade-out');
-            });
-
-            setTimeout(() => {
-                fetch('{{ url_for("clear_all_notes") }}', {
-                    method: 'POST'
-                }).then(response => {
-                    if (response.ok) {
-                        chatContainer.innerHTML = '';
-                    }
-                });
-            }, 500);
-        }
-    });
+    function addVoiceNoteToDOM(note) {
+        const chatContainer = document.querySelector('.chat-container');
+        const noteElement = document.createElement('div');
+        noteElement.className = `chat-message voice-note fade-in`;
+        noteElement.innerHTML = `
+            <div class="emoji-avatar">
+                ${note.emoji}
+            </div>
+            <div class="message-content">
+                <div class="audio-container">
+                    <audio controls>
+                        <source src="/static/audio/${note.content}" type="audio/wav">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="note-actions">
+                        <a href="/edit/${note.id}" title="Edit"><span class="material-icons">edit</span></a>
+                        <a href="/delete/${note.id}" onclick="return confirm('Are you sure you want to delete this note?');" title="Delete"><span class="material-icons">delete</span></a>
+                    </div>
+                </div>
+            </div>
+        `;
+        chatContainer.appendChild(noteElement);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 </script>
 {% endblock %}
