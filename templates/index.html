@@ -1,11 +1,23 @@
 {% extends 'base.html' %}
 
+{% block extra_head %}
+<style>
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; }
+    }
+    .fade-out {
+        animation: fadeOut 0.5s ease-out;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
     <div class="chat-container">
     {% for note in notes %}
         <div class="chat-message {% if note[3] %}voice-note{% else %}text-note{% endif %}">
             <div class="emoji-avatar">
-                {{ note[4] }}
+                {{ note[4] | safe }}
             </div>
             <div class="message-content">
                 {% if note[3] %}
@@ -39,6 +51,10 @@
             <span class="material-icons">mic</span>
         </button>
     </div>
+
+    <button id="clearAllButton" class="clear-all-button">
+        <span class="material-icons">delete_sweep</span> Clear All
+    </button>
 {% endblock %}
 
 {% block scripts %}
@@ -117,5 +133,27 @@
             }
         });
     }
+
+    const clearAllButton = document.getElementById('clearAllButton');
+    const chatContainer = document.querySelector('.chat-container');
+
+    clearAllButton.addEventListener('click', function() {
+        if (confirm('Are you sure you want to clear all notes?')) {
+            const notes = document.querySelectorAll('.chat-message');
+            notes.forEach(note => {
+                note.classList.add('fade-out');
+            });
+
+            setTimeout(() => {
+                fetch('{{ url_for("clear_all_notes") }}', {
+                    method: 'POST'
+                }).then(response => {
+                    if (response.ok) {
+                        chatContainer.innerHTML = '';
+                    }
+                });
+            }, 500);
+        }
+    });
 </script>
 {% endblock %}

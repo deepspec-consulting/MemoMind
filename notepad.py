@@ -5,12 +5,9 @@ import os
 from werkzeug.utils import secure_filename
 import io
 from datetime import datetime
-import random
+import requests
 
 app = Flask(__name__, static_folder='static')
-
-# Define the EMOJIS list
-EMOJIS = ['😀', '😎', '🤔', '🥳', '🐱', '🐶', '🦄', '🌈', '🍕', '🚀', '🎨', '🎵', '🌺', '🍉', '🏖️', '🎮', '🚲', '📚', '🍿', '🧘']
 
 # Database setup
 def init_db():
@@ -22,19 +19,27 @@ def init_db():
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   title TEXT NOT NULL,
                   content TEXT NOT NULL,
-                  is_voice BOOLEAN DEFAULT FALSE)''')
-    
-    # Check if emoji column exists, if not, add it
-    c.execute("PRAGMA table_info(notes)")
-    columns = [column[1] for column in c.fetchall()]
-    if 'emoji' not in columns:
-        c.execute("ALTER TABLE notes ADD COLUMN emoji TEXT")
+                  is_voice BOOLEAN DEFAULT FALSE,
+                  emoji TEXT)''')
     
     conn.commit()
     conn.close()
 
 # Call init_db at the start of the application
 init_db()
+
+def get_random_emoji():
+    try:
+        response = requests.get('https://emojihub.yurace.pro/api/random')
+        if response.status_code == 200:
+            emoji_data = response.json()
+            return emoji_data['htmlCode'][0]  # Return the first HTML code
+        else:
+            print("Failed to fetch emoji, status code:", response.status_code)
+            return '&#128512;'  # Default emoji if API call fails
+    except Exception as e:
+        print("Error fetching emoji:", str(e))
+        return '&#128512;'  # Default emoji if any error occurs
 
 @app.route('/')
 def index():
@@ -50,7 +55,7 @@ def add_note():
     if request.method == 'POST':
         title = request.form['title']
         content = request.form['content']
-        emoji = random.choice(EMOJIS)
+        emoji = get_random_emoji()
         conn = sqlite3.connect('notes.db')
         c = conn.cursor()
         c.execute("INSERT INTO notes (title, content, emoji) VALUES (?, ?, ?)", (title, content, emoji))
@@ -132,7 +137,7 @@ def add_voice_note():
         
         audio_file.save(file_path)
         
-        emoji = random.choice(EMOJIS)
+        emoji = get_random_emoji()
         conn = sqlite3.connect('notes.db')
         c = conn.cursor()
         c.execute("INSERT INTO notes (title, content, is_voice, emoji) VALUES (?, ?, ?, ?)", 
@@ -142,6 +147,15 @@ def add_voice_note():
         return '', 204  # Return no content, but a successful status code
     
     return 'Failed to save audio', 400
+
+@app.route('/clear_all', methods=['POST'])
+def clear_all_notes():
+    conn = sqlite3.connect('notes.db')
+    c = conn.cursor()
+    c.execute("DELETE FROM notes")
+    conn.commit()
+    conn.close()
+    return '', 204  # Return no content, but a successful status code
 
 if __name__ == '__main__':
     app.run(debug=True)

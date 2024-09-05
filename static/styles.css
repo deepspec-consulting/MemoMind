@@ -207,3 +207,25 @@ input[type="submit"]:hover {
     flex-grow: 1;
     margin-right: 10px;
 }
+
+.clear-all-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.clear-all-button:hover {
+    background-color: #c0392b;
+}
+
+.clear-all-button .material-icons {
+    margin-right: 5px;
+}
