@@ -5,8 +5,8 @@ import os
 from werkzeug.utils import secure_filename
 import io
 from datetime import datetime
-import requests
 import sys
+from utils import get_random_emoji  # Import the function from utils.py
 
 app = Flask(__name__, static_folder='static')
 
@@ -28,19 +28,6 @@ def init_db():
 
 # Call init_db at the start of the application
 init_db()
-
-def get_random_emoji():
-    try:
-        response = requests.get('https://emojihub.yurace.pro/api/random')
-        if response.status_code == 200:
-            emoji_data = response.json()
-            return emoji_data['htmlCode'][0]  # Return the first HTML code
-        else:
-            print("Failed to fetch emoji, status code:", response.status_code)
-            return '&#128512;'  # Default emoji if API call fails
-    except Exception as e:
-        print("Error fetching emoji:", str(e))
-        return '&#128512;'  # Default emoji if any error occurs
 
 @app.route('/')
 def index():
