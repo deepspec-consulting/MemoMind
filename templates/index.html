@@ -3,8 +3,8 @@
 {% block extra_head %}
 <style>
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
     }
     .fade-in {
         animation: fadeIn 0.5s ease-out;
@@ -13,7 +13,8 @@
 {% endblock %}
 
 {% block content %}
-    <div id="chatContainer" class="chat-container">
+<div class="app-container">
+    <div id="bentoContainer" class="bento-container">
         <!-- Notes will be dynamically loaded here -->
     </div>
 
@@ -27,11 +28,12 @@
     <div id="loadingIndicator" class="loading-indicator" style="display: none;">
         <div class="spinner"></div>
     </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    const chatContainer = document.getElementById('chatContainer');
+    const bentoContainer = document.getElementById('bentoContainer');
     const noteInput = document.getElementById('noteInput');
     const micButton = document.getElementById('micButton');
     let mediaRecorder;
@@ -45,8 +47,8 @@
     loadNotes();
 
     // Infinite scroll
-    chatContainer.addEventListener('scroll', () => {
-        if (chatContainer.scrollTop + chatContainer.clientHeight >= chatContainer.scrollHeight - 100) {
+    window.addEventListener('scroll', () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 100) {
             if (!isLoading && hasMoreNotes) {
                 loadNotes();
             }
@@ -118,7 +120,7 @@
 
     function addNoteToDOM(note, prepend = false) {
         const noteElement = document.createElement('div');
-        noteElement.className = `chat-message text-note fade-in`;
+        noteElement.className = `bento-item text-note fade-in ${getRandomSize()}`;
         noteElement.innerHTML = `
             <div class="emoji-avatar">
                 ${note.emoji}
@@ -134,35 +136,15 @@
             </div>
         `;
         if (prepend) {
-            chatContainer.prepend(noteElement);
+            bentoContainer.prepend(noteElement);
         } else {
-            chatContainer.appendChild(noteElement);
+            bentoContainer.appendChild(noteElement);
         }
-    }
-
-    function saveVoiceNote(audioBlob) {
-        showLoadingIndicator();
-        const formData = new FormData();
-        formData.append('audio', audioBlob, 'recording.wav');
-        fetch('{{ url_for("add_voice_note") }}', {
-            method: 'POST',
-            body: formData
-        }).then(response => {
-            if (response.ok) {
-                return response.json();
-            }
-        }).then(data => {
-            if (data) {
-                addVoiceNoteToDOM(data, true);
-            }
-        }).finally(() => {
-            hideLoadingIndicator();
-        });
     }
 
     function addVoiceNoteToDOM(note, prepend = false) {
         const noteElement = document.createElement('div');
-        noteElement.className = `chat-message voice-note fade-in`;
+        noteElement.className = `bento-item voice-note fade-in ${getRandomSize()}`;
         noteElement.innerHTML = `
             <div class="emoji-avatar">
                 ${note.emoji}
@@ -181,9 +163,9 @@
             </div>
         `;
         if (prepend) {
-            chatContainer.prepend(noteElement);
+            bentoContainer.prepend(noteElement);
         } else {
-            chatContainer.appendChild(noteElement);
+            bentoContainer.appendChild(noteElement);
         }
     }
 
@@ -193,6 +175,11 @@
 
     function hideLoadingIndicator() {
         document.getElementById('loadingIndicator').style.display = 'none';
+    }
+
+    function getRandomSize() {
+        const sizes = ['small', 'medium', 'large'];
+        return sizes[Math.floor(Math.random() * sizes.length)];
     }
 
     // ... rest of the existing JavaScript ...
